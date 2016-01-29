@@ -10,7 +10,8 @@ RUN apk --no-cache --update add \
                             ca-certificates \
                             ruby \
                             ruby-irb \
-                            ruby-dev && \
+                            ruby-dev \
+                            python3 && \
     echo 'gem: --no-document' >> /etc/gemrc && \
     gem install fluentd -v 0.12.20 && \
     apk del build-base ruby-dev && \
@@ -34,13 +35,14 @@ RUN echo "gem: --user-install --no-document" >> ~/.gemrc
 ENV PATH /home/fluent/.gem/ruby/2.2.0/bin:$PATH
 ENV GEM_PATH /home/fluent/.gem/ruby/2.2.0:$GEM_PATH
 
-COPY fluent.conf /fluentd/etc/
-ONBUILD COPY fluent.conf /fluentd/etc/
+COPY fluent.conf.TMPL /fluentd/etc/
+ONBUILD COPY fluent.conf.TMPL /fluentd/etc/
 ONBUILD COPY plugins /fluentd/plugins/
+ADD write_config_and_start_fluentd.py /home/fluent/write_config_and_start_fluentd.py
 
 ENV FLUENTD_OPT=""
 ENV FLUENTD_CONF="fluent.conf"
 
 EXPOSE 24224
 
-CMD exec fluentd -c /fluentd/etc/$FLUENTD_CONF -p /fluentd/plugins $FLUENTD_OPT
+CMD exec ./write_config_and_start_fluentd.py
